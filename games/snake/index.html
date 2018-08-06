@@ -26,6 +26,11 @@
 				onclick="game.start(); this.disabled = true;">Start</button>
 		</div>
 	</div>
+	<div class="row">
+		<div class="col-4">
+			Fruit Sprites - <a href='https://www.freepik.com/free-vector/collection-with-flat-summer-fruit_870523.htm'>Designed by Freepik</a>
+		</div>
+	</div>
 </div>
 <!-- END content -->
 <!-- BEGIN scripts -->
@@ -50,6 +55,38 @@ config = {
 	snake_can_burrow: true,
 	snake_speed: 100
 }
+resource = {
+	fruits: new Image(),
+	load: function() {
+		this.fruits.src = 'fruits_2.png';
+	}
+}
+draw = {
+	context: null,
+	square: function (x, y, fill, stroke) {
+		this.context.beginPath();
+		this.context.fillStyle = fill;
+		this.context.strokeStyle = stroke;
+		this.context.rect(x, y, config.grid, config.grid);
+		this.context.fill();
+		this.context.stroke();
+	},
+	sprite: function (img, x, y, posX, posY, height, width, offsetX, offsetY) {
+		offsetX = offsetX || 0;
+		offsetY = offsetY || 0;
+		this.context.drawImage(
+			img,
+			posX * height + offsetX,
+			posY * width + offsetY,
+			width,
+			height,
+			x, y,
+			config.grid,
+			config.grid
+		);
+	}
+}
+
 game = {
 	snake: {
 		// Direction in degrees
@@ -66,10 +103,10 @@ game = {
 			for (i in this.body) {
 				let b = this.body[i],
 					x = b[0] * config.grid,
-					y = b[1] * config.grid,
-					s = config.grid;
-				ctx.fillStyle = 'green';
-				ctx.fillRect(x, y, s, s);
+					y = b[1] * config.grid;
+				
+				draw.square(x,y, 'green', 'black');
+	
 			}
 		},
 		move: function () {
@@ -109,6 +146,14 @@ game = {
 			// move head
 			this.body.unshift([this.x, this.y]);
 			
+			// check collision with self
+			for (i in this.body) {
+				let b = this.body[i];
+				if (i != 0 && this.x == b[0] && this.y == b[1]) {
+					this.dead = true;
+				}
+			}
+			
 			// check collision with berry
 			let ate_berry = null;
 			for (i in game.berries) {
@@ -146,11 +191,15 @@ game = {
 	},
 	berries: [
 		[3,3],
-		[25,17]
+		[10,14]
 	],
 	start: function() {
+		resource.load();
+		draw.context = config.window.getContext('2d');
+		
 		this.time.last = performance.now();
 		this.frame();
+		// Create input buffer handler
 		$(window).keydown(function (event) {
 			if (typeof game.keys[event.key] !== 'undefined') {
 				game.keys.reset();
@@ -197,22 +246,27 @@ game = {
 		game.snake.move();
 	},
 	draw: function (delta) {
-		let ctx = config.window.getContext('2d');
+		let ctx = draw.context;
 		// Clear all
 		ctx.clearRect(0,0,config.width, config.height);
+		ctx.imageSmoothingEnabled = false;
 		// Draw snake
 		game.snake.draw(ctx);
 		// Draw berries
-		ctx.fillStyle = 'pink';
+		ctx.fillStyle = 'red';
+		ctx.strokeStyle = 'gold';
+		ctx.lineCap = 'round';
 		for (i in game.berries) {
 			let berry = game.berries[i]
-				x = berry[0] * config.grid,
-				y = berry[1] * config.grid;
-			ctx.fillRect(x, y, config.grid, config.grid);
+				s = config.grid,
+				x = berry[0] * s,
+				y = berry[1] * s;
+				draw.sprite(
+					resource.fruits,
+					x, y, 0, 0, 300, 300, 130, 130);
 		}
 	}
 }
-
 </script>
 <!-- END scripts -->
 </body>
