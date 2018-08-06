@@ -1,0 +1,219 @@
+<html>
+<head>
+	<title>Snake</title>
+	<!-- BEGIN styles -->
+	<link rel="stylesheet" href="/css/required.css">
+	<link rel="stylesheet" href="/css/theme.css">
+	<style>
+.game-window {
+	width: 100%;
+	height: auto;
+	background-color: #808080;
+}
+	
+	</style>
+	<!-- END styles -->
+</head>
+<body>
+<!-- BEGIN content -->
+<div class="container">
+	<div class="row">
+		<div class="col-12">
+			<canvas class="game-window" width="800" height="600"></canvas>
+		</div>
+		<div class="col-12">
+			<button class="btn btn-success btn-block"
+				onclick="game.start(); this.disabled = true;">Start</button>
+		</div>
+	</div>
+</div>
+<!-- END content -->
+<!-- BEGIN scripts -->
+<script src="/js/required.js"></script>
+<script>
+window.requestAnimationFrame = window.requestAnimationFrame
+                               || window.mozRequestAnimationFrame
+                               || window.webkitRequestAnimationFrame
+                               || window.msRequestAnimationFrame
+                               || function(f){return setTimeout(f, 1000/60)}
+
+window.cancelAnimationFrame = window.cancelAnimationFrame
+                              || window.mozCancelAnimationFrame
+                              || function(requestID){clearTimeout(requestID)} //fall back
+
+config = {
+	window: $('.game-window')[0],
+	width: 800,
+	height: 600,
+	grid: 40,
+	
+	snake_can_burrow: true,
+	snake_speed: 100
+}
+game = {
+	snake: {
+		// Direction in degrees
+		direction: 0,
+		x: 10,
+		y: 10,
+		dead: false,
+		body: [
+			[10,10],
+			[9,10],
+			[8,10]
+		],
+		draw: function (ctx) {
+			for (i in this.body) {
+				let b = this.body[i],
+					x = b[0] * config.grid,
+					y = b[1] * config.grid,
+					s = config.grid;
+				ctx.fillStyle = 'green';
+				ctx.fillRect(x, y, s, s);
+			}
+		},
+		move: function () {
+			if (this.dead) return;
+			// check if need to turn
+			this.turn();
+			// check direction
+			switch (this.direction) {
+				case 0:
+					this.x += 1;
+					break;
+				case 90:
+					this.y -= 1;
+					break;
+				case 180:
+					this.x -= 1;
+					break;
+				case 270:
+					this.y += 1;
+					break;
+			}
+			// teleport if option set
+			if (config.snake_can_burrow) {
+				if (this.x >= config.width / config.grid) {
+					this.x = 0;
+				}
+				if (this.x < 0) {
+					this.x = config.width / config.grid;
+				}
+				if (this.y >= config.height / config.grid) {
+					this.y = 0;
+				}
+				if (this.y < 0) {
+					this.y = config.height / config.grid;
+				}
+			}
+			// move head
+			this.body.unshift([this.x, this.y]);
+			
+			// check collision with berry
+			let ate_berry = null;
+			for (i in game.berries) {
+				let berry = game.berries[i];
+				if (berry[0] == this.x && berry[1] == this.y) {
+					ate_berry = i;
+				}
+			}
+			if (ate_berry !== null) {
+				// Eat berry
+				game.berries.splice(ate_berry, 1);
+				game.berries.push([
+					Math.floor(Math.random() * config.width / config.grid),
+					Math.floor(Math.random() * config.height / config.grid)
+				]);
+			} else {
+				// Remove last tail
+				this.body.pop();
+			}
+		},
+		turn: function () {
+			if (game.keys.w && (this.direction == 0 || this.direction == 180)) {
+				this.direction = 90;
+			}
+			if (game.keys.a && (this.direction == 90 || this.direction == 270)) {
+				this.direction = 180;
+			}
+			if (game.keys.s && (this.direction == 0 || this.direction == 180)) {
+				this.direction = 270;
+			}
+			if (game.keys.d && (this.direction == 90 || this.direction == 270)) {
+				this.direction = 0;
+			}
+		}
+	},
+	berries: [
+		[3,3],
+		[25,17]
+	],
+	start: function() {
+		this.time.last = performance.now();
+		this.frame();
+		$(window).keydown(function (event) {
+			if (typeof game.keys[event.key] !== 'undefined') {
+				game.keys.reset();
+				game.keys[event.key] = true;
+			}
+		});
+	},
+	keys: {
+		w: false,
+		a: false,
+		s: false,
+		d: false,
+		reset: function () {
+			this.w = false;
+			this.a = false;
+			this.s = false;
+			this.d = false;
+		}
+	},
+	time: {
+		current: 0,
+		last: 0,
+		step: 0.1,
+		delta: 0,
+		tick: function () {
+			this.current = performance.now();
+			this.delta += Math.min((this.current - this.last) / 1000);
+		}
+	},
+	frame: function() {
+		game.time.tick();
+		
+		while (game.time.delta > game.time.step) {
+			game.time.delta -= game.time.step;
+			game.update(game.time.delta);
+		}
+		
+		game.draw(game.time.delta);
+		
+		game.time.last = game.time.current;
+		window.requestAnimationFrame(game.frame);
+	},
+	update: function(delta) {
+		game.snake.move();
+	},
+	draw: function (delta) {
+		let ctx = config.window.getContext('2d');
+		// Clear all
+		ctx.clearRect(0,0,config.width, config.height);
+		// Draw snake
+		game.snake.draw(ctx);
+		// Draw berries
+		ctx.fillStyle = 'pink';
+		for (i in game.berries) {
+			let berry = game.berries[i]
+				x = berry[0] * config.grid,
+				y = berry[1] * config.grid;
+			ctx.fillRect(x, y, config.grid, config.grid);
+		}
+	}
+}
+
+</script>
+<!-- END scripts -->
+</body>
+</html>
