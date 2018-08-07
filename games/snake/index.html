@@ -6,11 +6,11 @@
 	<link rel="stylesheet" href="/css/theme.css">
 	<style>
 .game-window {
+	max-width: 800px;
 	width: 100%;
 	height: auto;
 	background-color: #808080;
 }
-	
 	</style>
 	<!-- END styles -->
 </head>
@@ -18,7 +18,7 @@
 <!-- BEGIN content -->
 <div class="container">
 	<div class="row">
-		<div class="col-12">
+		<div class="col-12 d-flex justify-content-center">
 			<canvas class="game-window" width="800" height="600"></canvas>
 		</div>
 		<div class="col-12">
@@ -36,6 +36,7 @@
 <!-- BEGIN scripts -->
 <script src="/js/required.js"></script>
 <script>
+/*** RequestAnimationFrame Polyfill ***/
 window.requestAnimationFrame = window.requestAnimationFrame
                                || window.mozRequestAnimationFrame
                                || window.webkitRequestAnimationFrame
@@ -45,7 +46,28 @@ window.requestAnimationFrame = window.requestAnimationFrame
 window.cancelAnimationFrame = window.cancelAnimationFrame
                               || window.mozCancelAnimationFrame
                               || function(requestID){clearTimeout(requestID)} //fall back
-
+/*** APP ***/
+function Sprite(img, width, height, positions){
+	this.img = img;
+	this.width = width;
+	this.height = height;
+	this.positions = positions;
+}
+Sprite.prototype = {
+	draw: function(position, x, y){
+		var pos = this.positions[position];
+		draw.context.drawImage(
+			this.img,
+			pos[0],
+			pos[1],
+			this.width,
+			this.height,
+			x, y,
+			config.grid,
+			config.grid
+		);
+	}
+};
 config = {
 	window: $('.game-window')[0],
 	width: 800,
@@ -58,9 +80,19 @@ config = {
 resource = {
 	fruits: new Image(),
 	load: function() {
-		this.fruits.src = 'fruits_2.png';
+		this.fruits.src = 'fruits.png';
 	}
 }
+sprites = {
+	fruits: new Sprite(
+		resource.fruits,
+		188, 188, [
+			[6, 0], [212, 0], [418, 0],
+			[6, 188], [212, 188], [418, 188],
+			[6, 376], [212, 376], [418, 376]
+		])
+}
+
 draw = {
 	context: null,
 	square: function (x, y, fill, stroke) {
@@ -158,17 +190,18 @@ game = {
 			let ate_berry = null;
 			for (i in game.berries) {
 				let berry = game.berries[i];
-				if (berry[0] == this.x && berry[1] == this.y) {
+				if (berry.x == this.x && berry.y == this.y) {
 					ate_berry = i;
 				}
 			}
 			if (ate_berry !== null) {
 				// Eat berry
 				game.berries.splice(ate_berry, 1);
-				game.berries.push([
-					Math.floor(Math.random() * config.width / config.grid),
-					Math.floor(Math.random() * config.height / config.grid)
-				]);
+				game.berries.push({
+					x: Math.floor(Math.random() * config.width / config.grid),
+					y: Math.floor(Math.random() * config.height / config.grid),
+					i: Math.floor(Math.random() * sprites.fruits.positions.length)
+				});
 			} else {
 				// Remove last tail
 				this.body.pop();
@@ -190,8 +223,8 @@ game = {
 		}
 	},
 	berries: [
-		[3,3],
-		[10,14]
+		{x: 3, y: 3, i: 1 },
+		{x: 14, y: 9, i: 4 }
 	],
 	start: function() {
 		resource.load();
@@ -259,11 +292,9 @@ game = {
 		for (i in game.berries) {
 			let berry = game.berries[i]
 				s = config.grid,
-				x = berry[0] * s,
-				y = berry[1] * s;
-				draw.sprite(
-					resource.fruits,
-					x, y, 0, 0, 300, 300, 130, 130);
+				x = berry.x * s,
+				y = berry.y * s;
+				sprites.fruits.draw(berry.i, x, y);
 		}
 	}
 }
