@@ -1,0 +1,120 @@
+<html>
+<head>
+	<title>Tic Tac Toe</title>
+	
+	<link rel="stylesheet" href="/css/required.css">
+<style>
+
+.board-row {
+	display: flex;
+	justify-content: center;
+}
+
+.board-row .btn {
+	margin: 0.5em;
+	width: 5em;
+	height: 5em;
+	line-height: 5em;
+
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+	<h1 class="text-center"><i class="fa fa-times"></i> Tic Tac Toe <i class="far fa-circle"></i></h1>
+	
+	<div id="board">
+		<div class="board-row">
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+		</div>
+		<div class="board-row">
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+		</div>
+		<div class="board-row">
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+			<button class="btn btn-secondary"></button>
+		</div>
+	</div>
+	
+	<div class="alert alert-success text-center fade"></div>
+	
+	<button class="btn btn-secondary btn-block" onclick="reset()">Reset Game</button>
+</div>
+<script src="/js/required.js"></script>
+<script>
+var player = true,
+	board = [[], [], []];
+
+$('.board-row .btn').each(function (i, b) {
+	let row = i % 3,
+		col = Math.floor(i / 3);
+		board[row][col] = null;
+	$(b).click(function () {
+		set(this);
+		check(this);
+		player = !player;
+	})
+	.data('col', col)
+	.data('row', row);
+});
+function set(btn) {
+	if (!$(btn).hasClass('btn-secondary')) return;
+	let row = $(btn).data('row'),
+		col = $(btn).data('col');
+	board[row][col] = player;
+	$(btn).removeClass('btn-secondary')
+		.addClass((player ? 'btn-outline-primary' : 'btn-outline-danger'))
+		.append($('<i>')
+			.addClass((player ? 'fa fa-times' : 'far fa-circle')));
+}
+
+function check(btn) {
+	let cell = $(btn),
+		r = cell.data('row'),
+		c = cell.data('col'),
+		win = row(r) || col(c) || diagonals();
+	if (win) {
+		let symbol = (player ? 'fa fa-times' : 'far fa-circle');
+		$('.alert').html(`<i class="${symbol}"></i> player has won!`)
+			.addClass('show');
+	}
+}
+function row(r) {
+	return board[r][0] === player && board[r][1] === player && board[r][2] === player;
+}
+function col(c) {
+	return board[0][c] === player && board[1][c] === player && board[2][c] === player;
+}
+function diagonals() {
+	return (
+		board[0][0] === player && 
+		board[1][1] === player && 
+		board[2][2] === player
+		) || (
+		board[0][2] === player &&
+		board[1][1] === player && 
+		board[2][0] === player);
+}
+
+function reset() {
+	$('.board-row .btn').html('')
+		.removeClass('btn-outline-primary btn-outline-danger')
+		.addClass('btn-secondary');
+	$('.alert-success').removeClass('show');
+	player = true;
+	$('.board-row .btn').each(function (i, b) {
+		let row = i % 3,
+			col = Math.floor(i / 3);
+		board[row][col] = null;
+	});
+	console.log(board);
+}
+</script>
+</body>
+</html>
