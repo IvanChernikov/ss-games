@@ -72,40 +72,18 @@ body {
 <!-- END content -->
 <!-- BEGIN scripts -->
 <script src="/js/required.js"></script>
+<?php
+foreach (new DirectoryIterator(realpath('../../js/engine')) as $fi) {
+	$file = $fi->getFilename();
+	if (preg_match('/.js$/', $file)) {
+		echo sprintf('<script src="/js/engine/%s"></script>', $file);
+	}
+}
+?>
+<script src="game.js"></script>
 <script>
 $('#modal-start').modal('show');
-/*** RequestAnimationFrame Polyfill ***/
-window.requestAnimationFrame = window.requestAnimationFrame
-                               || window.mozRequestAnimationFrame
-                               || window.webkitRequestAnimationFrame
-                               || window.msRequestAnimationFrame
-                               || function(f){return setTimeout(f, 1000/60)}
 
-window.cancelAnimationFrame = window.cancelAnimationFrame
-                              || window.mozCancelAnimationFrame
-                              || function(requestID){clearTimeout(requestID)} //fall back
-/*** APP ***/
-function Sprite(img, width, height, positions){
-	this.img = img;
-	this.width = width;
-	this.height = height;
-	this.positions = positions;
-}
-Sprite.prototype = {
-	draw: function(position, x, y){
-		var pos = this.positions[position];
-		draw.context.drawImage(
-			this.img,
-			pos[0],
-			pos[1],
-			this.width,
-			this.height,
-			x, y,
-			config.grid,
-			config.grid
-		);
-	}
-};
 config = {
 	window: $('.game-window')[0],
 	width: 800,
@@ -116,55 +94,6 @@ config = {
 	bulletSpeed: 10,
 	invaderSpeed: 2,
 	invaderDrop: 16
-}
-resource = {
-	fruits: new Image(),
-	load: function() {
-		this.fruits.src = 'fruits.png';
-	}
-}
-sprites = {
-	fruits: new Sprite(
-		resource.fruits,
-		188, 188, [
-			[6, 0], [212, 0], [418, 0],
-			[6, 188], [212, 188], [418, 188],
-			[6, 376], [212, 376], [418, 376]
-		])
-}
-
-draw = {
-	context: null,
-	square: function (x, y, w, h, fill, stroke) {
-		this.context.beginPath();
-		this.context.fillStyle = fill;
-		this.context.strokeStyle = stroke;
-		this.context.rect(x, y, w, h);
-		this.context.fill();
-		this.context.stroke();
-	},
-	circle: function (x, y, r, fill, stroke) {
-		this.context.beginPath();
-		this.context.fillStyle = fill;
-		this.context.strokeStyle = stroke;
-		this.context.arc(x, y, r, 0, 2 * Math.PI);
-		this.context.fill();
-		this.context.stroke();
-	},
-	sprite: function (img, x, y, posX, posY, height, width, offsetX, offsetY) {
-		offsetX = offsetX || 0;
-		offsetY = offsetY || 0;
-		this.context.drawImage(
-			img,
-			posX * height + offsetX,
-			posY * width + offsetY,
-			width,
-			height,
-			x, y,
-			config.grid,
-			config.grid
-		);
-	}
 }
 
 player = {
